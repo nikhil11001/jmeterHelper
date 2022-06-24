@@ -1,24 +1,40 @@
-import logo from './logo.svg';
 import './App.css';
+import {useContext} from 'react'; 
+import Navbar from './Components/Navbar';
+import Workflow from './Components/Workflow';
+import {
+  BrowserRouter,
+  Routes,
+  Route,
+} from "react-router-dom";
+import Response from './Components/Response';
+import workflowContext from './context/workflowContext/workflowRespContext';
+
+
 
 function App() {
+
+  const context = useContext(workflowContext);
+  const { apiList, apiResp, workflowName} = context;
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <div className="">
+      <BrowserRouter>
+        <Navbar />
+        <div className='container'>
+          <Routes>
+            <Route path="/" element={<Workflow />}></Route>
+            <Route path="/apiResp" element={
+              <Response
+                apiResp={apiResp}
+                apiList={apiList}
+                workflowName={workflowName} />
+            }></Route>
+            {/* <Route path="/apiResp" element={<Response />}></Route> */}
+          </Routes>
+        </div>
+      </BrowserRouter>
+    </div >
   );
 }
 
