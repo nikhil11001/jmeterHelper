@@ -1,14 +1,10 @@
 import React, {useState, useEffect, useContext} from 'react'
 import ShowWorkflow from './ShowWorkflow';
 import axios from 'axios';
-import Response from './Response';
 import api from './MockAPI/apiAll';
 import workflowContext from '../context/workflowContext/workflowRespContext'
 import AutoComplete from './Utilities/Autocomplete/AutoComplete';
 import {
-    BrowserRouter,
-    Routes,
-    Route,
     useNavigate
   } from "react-router-dom";
 
@@ -120,48 +116,102 @@ function Workflow() {
         setEditBox(true);
     }
 
-    function callApi () {
+    // const mapLoop = async _ => {
+    //     console.log('Start')
+      
+    //     const promises = fruitsToGet.map(async fruit => {
+    //       const numFruit = await getNumFruit(fruit)
+    //       return numFruit
+    //     })
+      
+    //     const numFruits = await Promise.all(promises)
+    //     console.log(numFruits)
+      
+    //     console.log('End')
+    //   }
 
-        apiList.forEach(api => {
+    async function callApi () {
+        let apiResponse = [];
+
+        const promises = apiList.map(async api => {
             switch (api.httpMethod) {
                 case "GET":
-                    axios.get(api.apiPath).then((response) => {
-                        setResponseReceived(response.data);
-                    });
+                    await axios
+                        .get(api.apiPath)
+                        .then((response) => {
+                            setResponseReceived(apiResponse, response, api);
+                        })
+                        .catch(error => {
+                            if (error.response) {
+                                setResponseReceived(apiResponse, error.response, api)
+                            }
+                        });
                     break;
                 case "POST":
-                    axios.post(api.apiPath, api.requestBody).then((response) => {
-                        setResponseReceived(response.data);
-                        // setApiResp([...apiResp, [...response.data]]);
-                    });
+                    await axios
+                        .post(api.apiPath, api.requestBody)
+                        .then((response) => {
+                            setResponseReceived(apiResponse, response, api);
+                        })
+                        .catch(error => {
+                            if (error.response) {
+                                setResponseReceived(apiResponse, error.response, api)
+                            }
+                        });
                     break;
                 case "PUT":
-                    axios.put(api.apiPath, api.requestBody).then((response) => {
-                        setResponseReceived(response.data);
-                        // setApiResp([...apiResp, [...response.data]]);
-                    });
+                    await axios
+                        .put(api.apiPath, api.requestBody)
+                        .then((response) => {
+                            setResponseReceived(apiResponse, response, api);
+                        })
+                        .catch(error => {
+                            if (error.response) {
+                                setResponseReceived(apiResponse, error.response, api)
+                            }
+                        });
                     break;
                 case "DELETE":
-                    axios.delete(api.apiPath).then((response) => {
-                        console.log(response.data);
-                        setResponseReceived([{resp: "Not Available"}]);
-                        // setResponseReceived(response.data);
-                        // setApiResp([...apiResp, ]);
-                    });
+                    await axios
+                        .delete(api.apiPath)
+                        .then((response) => {
+                            console.log(response.data);
+                            setResponseReceived(apiResponse, response, api);
+                        })                        
+                        .catch(error => {
+                            if (error.response) {
+                                setResponseReceived(apiResponse, error.response, api)
+                            }
+                        });
                     break;
                 default:
                     break;
             }
         })
-        navigate("/apiResp");
+
+        await Promise.all(promises);
+        await navigate("/apiResponse");
     }
-    function setResponseReceived (respReceived) {
-        const apiResponse = apiResp.slice();
-        if (respReceived && respReceived.length > 0) {
-            setApiResp([...apiResponse, [...respReceived]]);
-        } else {
-            setApiResp([...apiResponse, [respReceived]]);
+    function setResponseReceived (apiResponse, respReceived, api) {
+
+        const apiObj = {
+            "apiName" : api["apiName"],
+            "apiStat" : respReceived.status,
+            "resp": null
         }
+        if (respReceived.data && respReceived.data.length > 0) {
+            apiObj.resp = [...respReceived.data]
+        } else if (respReceived // 👈 null and undefined check
+            && Object.keys(respReceived).length === 0
+            && Object.getPrototypeOf(respReceived) === Object.prototype) {
+            apiObj.resp = [{resp: "Resp not available"}]
+        } else if (respReceived.data === undefined || respReceived.data === null) {
+            apiObj.resp = [{resp: "Resp not available"}]
+        } else {
+            apiObj.resp = [respReceived.data]
+        }
+        apiResponse.push(apiObj)
+        setApiResp(...apiResp, apiResponse);
     }
 // console.log(apiName, apiPath, httpMethod, requestBody);
 
@@ -209,7 +259,6 @@ function Workflow() {
             </div>
             <div className="mb-3">
                 <button type="button" className="btn btn-dark me-3" onClick={addApi} disabled={disableAdd()}>{editBox ?"Edit" : "Add"}</button>
-                {/*  */}
                 <button type="button" className="btn btn-dark" onClick={() => showApiInputBox(false)}>Cancel</button>
             </div>
         </div>
@@ -227,23 +276,6 @@ function Workflow() {
                 </div>
             </>
         : <div className="form-label">No Workflow Exists</div>}  
-
-{/* <Route exact path="/">
-  {loggedIn ? <Redirect to="/dashboard" /> : <PublicHomePage />}
-</Route> */}
-
-        {/* {apiResp && apiResp.length > 0 ? 
-            <BrowserRouter>
-              <Routes>
-                <Route path="/apiResp" element={
-                    <Response
-                        apiResp={apiResp}
-                        apiList={apiList} />
-                    }></Route>
-                </Routes>
-            </BrowserRouter>
-                : null    
-        }  */}
 
     </>)
 }

@@ -1,5 +1,4 @@
 import './App.css';
-import {useContext} from 'react'; 
 import Navbar from './Components/Navbar';
 import Workflow from './Components/Workflow';
 import {
@@ -8,14 +7,11 @@ import {
   Route,
 } from "react-router-dom";
 import Response from './Components/Response';
-import workflowContext from './context/workflowContext/workflowRespContext';
 
 
 
 function App() {
 
-  const context = useContext(workflowContext);
-  const { apiList, apiResp, workflowName} = context;
 
   return (
     <div className="">
@@ -24,12 +20,7 @@ function App() {
         <div className='container'>
           <Routes>
             <Route path="/" element={<Workflow />}></Route>
-            <Route path="/apiResp" element={
-              <Response
-                apiResp={apiResp}
-                apiList={apiList}
-                workflowName={workflowName} />
-            }></Route>
+            <Route path="/apiResponse" element={<Response />}></Route>
             {/* <Route path="/apiResp" element={<Response />}></Route> */}
           </Routes>
         </div>

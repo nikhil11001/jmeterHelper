@@ -19,7 +19,7 @@ function ShowWorkflow(props) {
         {props.apiList && props.apiList.length > 0 &&
         props.apiList.map((api, index) => {
             return (
-            <tr key={`${api.apiName} ${api.apiPath}`}>
+            <tr key={`${api.apiName}${api.apiPath}${index}`}>
                 <th scope="row">{index+1}</th>
                 <td>{api.apiName}</td>
                 <td>{api.apiPath}</td>
