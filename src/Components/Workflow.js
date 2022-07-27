@@ -1,238 +1,875 @@
-import React, {useState, useEffect, useContext} from 'react'
-import ShowWorkflow from './ShowWorkflow';
-import axios from 'axios';
-import Response from './Response';
-import api from './MockAPI/apiAll';
-import workflowContext from '../context/workflowContext/workflowRespContext'
-import AutoComplete from './Utilities/Autocomplete/AutoComplete';
-import {
-    BrowserRouter,
-    Routes,
-    Route,
-    useNavigate
-  } from "react-router-dom";
+import React, { useState, useEffect, useContext } from "react";
+import ShowWorkflow from "./ShowWorkflow";
+import axios from "axios";
+import Response from "./Response";
+import api from "./MockAPI/apiAll";
+import workflowContext from "../context/workflowContext/workflowRespContext";
+import AutoComplete from "./Utilities/Autocomplete/AutoComplete";
+import { BrowserRouter, Routes, Route, useNavigate } from "react-router-dom";
+
+import Form from "react-bootstrap/Form";
+import { Accordion, Col, Modal, Row, Table, Button } from "react-bootstrap";
+import Select from "react-select";
+import { ConnectingAirportsOutlined } from "@mui/icons-material";
 
 function Workflow() {
-    const [addApiBox, setAddApiBox] = useState(false);
-    const [editBox, setEditBox] = useState(false);
-    const [editIndex, setEditIndex] = useState(null);
+  const [addApiBox, setAddApiBox] = useState(false);
+  const [editBox, setEditBox] = useState(false);
+  const [editIndex, setEditIndex] = useState(null);
 
-    const context = useContext(workflowContext);
-    const { apiList, setApiList, apiResp, setApiResp, workflowName, setWorkflowName } = context;
+  const context = useContext(workflowContext);
+  const {
+    apiList,
+    setApiList,
+    apiResp,
+    setApiResp,
+    workflowName,
+    setWorkflowName,
+  } = context;
 
-    const [apiAll, setApiAll] = useState([]);
+  const [apiAll, setApiAll] = useState([]);
 
+  const [apiName, setApiName] = useState(null);
+  const [apiPath, setApiPath] = useState("");
+  const [httpMethod, setHttpMethod] = useState("");
+  const [requestBody, setRequestBody] = useState("");
+  const [apiAllNames, setApiAllNames] = useState([]);
+  const [environment, updateEnvironment] = useState("");
+  const [module, updateModule] = useState("");
+  const [moduleApi, updateModuleApiList] = useState([]);
+  const [options, updateOptions] = useState([]);
+  const [show, toogleModal] = useState(false);
+  const [workflowApiList, updateWorkflowApiList] = useState([]);
+  const [workflowDetails, updateWorkflowDetails] = useState({});
+  const [reqFiledsArr, setReqFiledsArr] = useState([]);
+  const [requestFileds, updateReqFileds] = useState("");
+  const [mappingArr, updateMappingArr] = useState([]);
+  const workflowList = {
+    dev: {
+      workFlowDetails: [
+        {
+          workflowName: "dev1",
+          apiList: [
+            {
+              name: "get",
+              details: {
+                fields: { name: "" },
+              },
+            },
+            {
+              name: "post",
+              details: {
+                fields: { name: "", address: "", age: "" },
+              },
+            },
+            {
+              name: "delete",
+              details: {
+                fields: { id: "" },
+              },
+            },
+          ],
+        },
+        {
+          workflowName: "dev2",
+          apiList: [
+            {
+              name: "post",
+              details: {
+                fields: { name: "", address: "", age: "" },
+              },
+            },
+            {
+              name: "delete",
+              details: {
+                fields: { id: "" },
+              },
+            },
+          ],
+        },
+      ],
+    },
 
-    const [apiName, setApiName] = useState("");
-    const [apiPath, setApiPath] = useState("");
-    const [httpMethod, setHttpMethod] = useState("");
-    const [requestBody, setRequestBody] = useState("");
-    const [apiAllNames, setApiAllNames] = useState([])
-    // let apiAllNames = apiAll.map(item => item.apiName)
+    uat: {
+      workFlowDetails: [
+        {
+          workflowName: "uat1",
+          apiList: [
+            {
+              name: "get",
+              details: {
+                fields: { name: "" },
+              },
+            },
+            {
+              name: "post",
+              details: {
+                fields: { name: "", address: "", age: "" },
+              },
+            },
+            {
+              name: "delete",
+              details: {
+                fields: { id: "" },
+              },
+            },
+          ],
+        },
+        {
+          workflowName: "uat2",
+          apiList: [
+            {
+              name: "post",
+              details: {
+                fields: { name: "", address: "", age: "" },
+              },
+            },
+            {
+              name: "delete",
+              details: {
+                fields: { id: "" },
+              },
+            },
+          ],
+        },
+      ],
+    },
+  };
 
-    let navigate = useNavigate();
-    
-    useEffect(function reload () {
-        // Mocking Resp
-        setApiAll([...api]);
-        setApiAllNames([...api].map(item => item.apiName))
-    }, []);
+  const moduleApiList = [
+    // {
+    //   moduleId: "module-1",
+    //   apiId: Date.now(),
+    //   apiName: "Get User List",
+    //   reqFields: {},
+    //   resFileds: [
+    //     {
+    //       userId: Date.now(),
+    //       userName: "USER 1",
+    //     },
+    //     {
+    //       userId: Date.now(),
+    //       userName: "USER 2",
+    //     },
+    //   ],
+    // },
+    {
+      moduleId: "module-2",
+      apiId: Date.now(),
+      apiName: "Get User List module 2",
+      reqFields: {},
+      resFileds: [
+        {
+          userId: Date.now(),
+          userName: "module-2USER 1",
+        },
+        {
+          userId: Date.now(),
+          userName: "module-2USER 2",
+        },
+      ],
+    },
+    {
+      moduleId: "module-2",
+      apiId: Date.now(),
+      apiName: "Create User",
+      reqFields: { id: Math.random(), name: "nikhil", age: 29 },
+      resFileds: { id: Math.random(), name: "nikhil", age: 29 },
+    },
+  ];
+  // let apiAllNames = apiAll.map(item => item.apiName)
 
-    function showApiInputBox (switchBox) {
-        if (switchBox === true) {
-            setApiName("");
-            setApiPath("");
-            setHttpMethod("");
-            setRequestBody("");        
-        }
-        setAddApiBox(switchBox);
-        setEditBox(false);
+  let navigate = useNavigate();
+
+  useEffect(function reload() {
+    // Mocking Resp
+    setApiAll([...api]);
+    setApiAllNames([...api].map((item) => item.apiName));
+  }, []);
+
+  function showApiInputBox(switchBox) {
+    if (switchBox === true) {
+      setApiName("");
+      setApiPath("");
+      setHttpMethod("");
+      setRequestBody("");
+    }
+    setAddApiBox(switchBox);
+    setEditBox(false);
+  }
+
+  function disableAdd() {
+    if (
+      apiName &&
+      apiName.length > 0 &&
+      apiPath &&
+      apiPath.length > 0 &&
+      httpMethod &&
+      httpMethod.length > 0
+    ) {
+      return false;
+    }
+    return true;
+  }
+
+  function disableWorkflow() {
+    if (workflowName && apiList && apiList.length > 0) {
+      return false;
+    }
+    return true;
+  }
+
+  function autoCompleteApi(val) {
+    setApiName(val);
+    let selectedApiIndex = apiAllNames.findIndex((item) => item === val);
+    if (selectedApiIndex !== -1) {
+      setApiPath(apiAll[selectedApiIndex].apiPath);
+      setHttpMethod(apiAll[selectedApiIndex].httpMethod);
+      setRequestBody(apiAll[selectedApiIndex].requestBody);
+    } else {
+      setApiPath("");
+      setHttpMethod("");
+      setRequestBody("");
+    }
+  }
+
+  function addApi() {
+    const apiObj = {
+      apiName: apiName,
+      apiPath: apiPath,
+      httpMethod: httpMethod,
+      requestBody: requestBody,
+    };
+    if (editBox) {
+      const newApiList = apiList.slice();
+      newApiList[editIndex] = apiObj;
+      setApiList(newApiList);
+    } else {
+      setApiList([...apiList, apiObj]);
     }
 
-    function disableAdd() {
-        if ((apiName && apiName.length > 0) && (apiPath && apiPath.length > 0) &&
-            (httpMethod && httpMethod.length > 0)) {
-                return false;
-        }
-        return true;
-    } 
+    setApiName("");
+    setApiPath("");
+    setHttpMethod("");
+    setRequestBody("");
 
-    function disableWorkflow() {
-        if (workflowName && apiList && apiList.length > 0) {
-            return false;
-        }
-        return true;
+    setApiResp([]);
+    showApiInputBox(false);
+  }
+
+  function deleteApi(index) {
+    setApiList(apiList.filter((_, ind) => ind !== index));
+  }
+
+  function editApi(index) {
+    showApiInputBox(true);
+    setEditIndex(index);
+    apiList.forEach((item, ind) => {
+      if (ind === index) {
+        setApiName(item.apiName);
+        setApiPath(item.apiPath);
+        setHttpMethod(item.httpMethod);
+        setRequestBody(item.requestBody);
+      }
+    });
+    setEditBox(true);
+  }
+
+  function callApi() {
+    apiList.forEach((api) => {
+      switch (api.httpMethod) {
+        case "GET":
+          axios.get(api.apiPath).then((response) => {
+            setResponseReceived(response.data);
+          });
+          break;
+        case "POST":
+          axios.post(api.apiPath, api.requestBody).then((response) => {
+            setResponseReceived(response.data);
+            // setApiResp([...apiResp, [...response.data]]);
+          });
+          break;
+        case "PUT":
+          axios.put(api.apiPath, api.requestBody).then((response) => {
+            setResponseReceived(response.data);
+            // setApiResp([...apiResp, [...response.data]]);
+          });
+          break;
+        case "DELETE":
+          axios.delete(api.apiPath).then((response) => {
+            console.log(response.data);
+            setResponseReceived([{ resp: "Not Available" }]);
+            // setResponseReceived(response.data);
+            // setApiResp([...apiResp, ]);
+          });
+          break;
+        default:
+          break;
+      }
+    });
+    navigate("/apiResp");
+  }
+  function setResponseReceived(respReceived) {
+    const apiResponse = apiResp.slice();
+    if (respReceived && respReceived.length > 0) {
+      setApiResp([...apiResponse, [...respReceived]]);
+    } else {
+      setApiResp([...apiResponse, [respReceived]]);
     }
+  }
+  // console.log(apiName, apiPath, httpMethod, requestBody);
 
-    function autoCompleteApi (val) {
-        setApiName(val);
-        let selectedApiIndex = apiAllNames.findIndex(item => item === val)
-        if (selectedApiIndex !== -1) {
-            setApiPath(apiAll[selectedApiIndex].apiPath);
-            setHttpMethod(apiAll[selectedApiIndex].httpMethod);
-            setRequestBody(apiAll[selectedApiIndex].requestBody);
+  const handleEnvironmentChange = (e) => {
+    console.log("Env==>", workflowList[e.target.value]);
+
+    updateEnvironment(e.target.value);
+    updateModule("");
+    setApiName(null);
+  };
+
+  const handleModuleChange = (e) => {
+    setApiName(null);
+    console.log("Module==>", e.target.value);
+    const list = moduleApiList.filter(
+      (item) => item.moduleId == e.target.value
+    );
+    let arr = list;
+    let optionsArr = [];
+    // arr.push(list);
+    optionsArr = arr.map((list) => {
+      return { value: list.apiId, label: list.apiName };
+    });
+    console.log("LIST==>", arr);
+    updateModuleApiList(arr);
+    updateOptions(optionsArr);
+    updateModule(e.target.value);
+  };
+  const createReqFildesArr = () => {
+    let objectKeysArr = null;
+    if (workflowApiList.length > 1) {
+      objectKeysArr = Object.keys(
+        workflowApiList[workflowApiList.length - 1].reqFields
+      );
+      if (workflowApiList.length > 1) {
+        const index = workflowApiList.findIndex(
+          (obj) => obj.apiName == apiName.label
+        );
+
+        const keysArr = Object.keys(workflowApiList[index - 1].reqFields);
+        setReqFiledsArr(keysArr);
+        console.log("arrObj===>", index, keysArr);
+      }
+    }
+    if (workflowApiList.length > 1) {
+      let newWorkflowApiList = [...workflowApiList];
+      let fieldMapping = {};
+      const lastIndex = newWorkflowApiList.length - 1;
+      let currentApiObj = newWorkflowApiList[lastIndex];
+      currentApiObj["reqFields"] = newWorkflowApiList[lastIndex - 1]?.resFileds;
+
+      const keysArr = Object.keys(currentApiObj?.reqFields);
+      const valuesArr = Object.values(currentApiObj?.reqFields);
+
+      const fieldMappingArr = keysArr.map((val, i) => {
+        return { key: val };
+      });
+
+      fieldMappingArr.map((obj) => {
+        valuesArr.map((val) => {
+          obj.value = val;
+        });
+      });
+
+      updateMappingArr(fieldMappingArr);
+    }
+    showModal();
+  };
+  const showModal = () => {
+    if (workflowApiList.length == 1) {
+      let reuestPaylod = {
+        id: Math.random(),
+        name: workflowName,
+        apiDetails: [
+          {
+            apiId: "",
+            sequenceNumber: "",
+            nextAPI: "",
+            previousAPI: "",
+            // fieldMapping:{
+            // currentAPIRequestField:"PreviousAPIResponseField"
+            // }
+          },
+        ],
+      };
+      console.log("Request Payload===>", reuestPaylod);
+    } else {
+      toogleModal(!show);
+    }
+  };
+
+  const getApiDetails = (val) => {
+    const apiObj = moduleApi.find((obj) => obj.apiName == val.label);
+    let arr = [...workflowApiList];
+    arr.push(apiObj);
+    updateWorkflowApiList(arr);
+    console.log("workflowApiList==>", workflowApiList);
+  };
+
+  const renderApiDetailsTable = () => {
+    return (
+      <div style={{ marginTop: 20 }}>
+        <h5>API Added to Workflow</h5>
+        <Table striped bordered hover responsive>
+          <thead>
+            <tr>
+              {/* <th></th> */}
+              <th>API ID</th>
+              {/* <th>Module ID</th>*/}
+              <th>API Name</th>
+              <th>Request Fileds</th>
+              <th>Response Fileds</th>
+            </tr>
+          </thead>
+          <tbody>
+            {workflowApiList.map((obj) => {
+              return (
+                <tr>
+                  {/* <td>
+                  <Form.Check type="checkbox" />
+                </td> */}
+                  <td>{obj.apiId}</td>
+                  {/* <td>{obj.moduleId}</td>*/}
+                  <td>{obj.apiName}</td>
+                  <td>{JSON.stringify(obj.reqFields)}</td>
+                  <td>{JSON.stringify(obj.resFileds)}</td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </Table>
+      </div>
+    );
+  };
+
+  const closeModal = () => {
+    toogleModal(false);
+  };
+
+  const handleCreateWorkflow = () => {
+    console.log("Create WorkFlow==>", workflowApiList);
+    let data = workflowApiList.map((obj, index) => {
+      let mappinObj = {};
+      if (index == 0 && index + 1 == 1) {
+        obj.nextAPI = workflowApiList[1].apiId;
+        obj.previousAPI = "";
+      } else {
+        if (workflowApiList[index + 1] !== undefined) {
+          obj.nextAPI = workflowApiList[index + 1].apiId;
         } else {
-            setApiPath("");
-            setHttpMethod("");
-            setRequestBody("");        
-        }
-    }
+          obj.nextAPI = "";
+          // obj.fieldMapping = mappingArr;
 
-    function addApi () {
-        const apiObj = {
-            "apiName": apiName,
-            "apiPath": apiPath,
-            "httpMethod": httpMethod,
-            "requestBody": requestBody
-        };
-        if (editBox) {
-            const newApiList = apiList.slice();
-            newApiList[editIndex] = apiObj;
-            setApiList(newApiList);
+          for (let i = 0; i < mappingArr.length; i++) {
+            let data = mappingArr[i]?.key;
+            mappinObj[`${data}`] =
+              workflowApiList[index - 1].reqFields[`${data}`];
+          }
+          obj.fieldMapping = mappinObj;
+        }
+
+        if (workflowApiList[index - 1] !== undefined) {
+          obj.previousAPI = workflowApiList[index - 1].apiId;
         } else {
-            setApiList([...apiList, apiObj])
+          obj.previousAPI = "";
         }
-        
-        setApiName("");
-        setApiPath("");
-        setHttpMethod("");
-        setRequestBody("");
+      }
+      return obj;
+    });
+    let reuestPaylod = {
+      id: Math.random(),
+      name: workflowName,
+      apiDetails: [...data],
+    };
+    console.log("Workflow payload==>", reuestPaylod);
+    closeModal();
+  };
 
-        setApiResp([]);
-        showApiInputBox(false);
+  const createFieldMapping = () => {
+    let newWorkflowApiList = [...workflowApiList];
+    let fieldMapping = {};
+    const lastIndex = newWorkflowApiList.length - 1;
+    let currentApiObj = newWorkflowApiList[lastIndex];
+    currentApiObj.reqFields = newWorkflowApiList[lastIndex - 1].resFileds;
+    fieldMapping[requestFileds] = currentApiObj.reqFields[requestFileds];
+    // fieldMapping = { ...currentApiObj.reqFields };
+    if (currentApiObj.fieldMapping) {
+      currentApiObj.fieldMapping = {
+        ...currentApiObj.fieldMapping,
+        ...fieldMapping,
+      };
+    } else {
+      currentApiObj.fieldMapping = { ...fieldMapping };
     }
 
-    function deleteApi (index) {
-        setApiList(apiList.filter((_, ind) => (ind !== index)))
-    }
+    newWorkflowApiList[lastIndex] = currentApiObj;
 
-    function editApi (index) {
-        showApiInputBox(true);
-        setEditIndex(index);
-        apiList.forEach((item, ind) => {
-            if (ind === index) {
-                setApiName(item.apiName);
-                setApiPath(item.apiPath);
-                setHttpMethod(item.httpMethod);
-                setRequestBody(item.requestBody);         
-            }
-        })
-        setEditBox(true);
-    }
+    updateWorkflowApiList(newWorkflowApiList);
+    console.log("fieldMapping===>", fieldMapping, newWorkflowApiList);
+  };
 
-    function callApi () {
+  const updateMappingFields = (data, index) => {
+    let newMappingArr = [...mappingArr];
+    newMappingArr[index].value = data;
+    updateMappingArr(newMappingArr);
+  };
 
-        apiList.forEach(api => {
-            switch (api.httpMethod) {
-                case "GET":
-                    axios.get(api.apiPath).then((response) => {
-                        setResponseReceived(response.data);
-                    });
-                    break;
-                case "POST":
-                    axios.post(api.apiPath, api.requestBody).then((response) => {
-                        setResponseReceived(response.data);
-                        // setApiResp([...apiResp, [...response.data]]);
-                    });
-                    break;
-                case "PUT":
-                    axios.put(api.apiPath, api.requestBody).then((response) => {
-                        setResponseReceived(response.data);
-                        // setApiResp([...apiResp, [...response.data]]);
-                    });
-                    break;
-                case "DELETE":
-                    axios.delete(api.apiPath).then((response) => {
-                        console.log(response.data);
-                        setResponseReceived([{resp: "Not Available"}]);
-                        // setResponseReceived(response.data);
-                        // setApiResp([...apiResp, ]);
-                    });
-                    break;
-                default:
-                    break;
-            }
-        })
-        navigate("/apiResp");
-    }
-    function setResponseReceived (respReceived) {
-        const apiResponse = apiResp.slice();
-        if (respReceived && respReceived.length > 0) {
-            setApiResp([...apiResponse, [...respReceived]]);
-        } else {
-            setApiResp([...apiResponse, [respReceived]]);
-        }
-    }
-// console.log(apiName, apiPath, httpMethod, requestBody);
+  const renderApiMappingTable = () => {
+    if (workflowApiList.length > 1) {
+      let newWorkflowApiList = [...workflowApiList];
+      let fieldMapping = {};
+      const lastIndex = newWorkflowApiList.length - 1;
+      // let currentApiObj = newWorkflowApiList[lastIndex];
+      // currentApiObj["reqFields"] = newWorkflowApiList[lastIndex - 1]?.resFileds;
+
+      // const keysArr = Object.keys(currentApiObj?.reqFields);
+      // const valuesArr = Object.values(currentApiObj?.reqFields);
+
+      // const fieldMappingArr = keysArr.map((val, i) => {
+      //   return { key: val };
+      // });
+
+      // fieldMappingArr.map((obj) => {
+      //   valuesArr.map((val) => {
+      //     obj.value = val;
+      //   });
+      // });
+
+      // updateMappingArr(fieldMappingArr);
+
+      // console.log("fieldMappingArr===>", fieldMappingArr);
+      return (
+        <Table striped bordered hover responsive>
+          <thead>
+            <tr>
+              <th>Request Fileds</th>
+              <th>Response Fileds</th>
+            </tr>
+          </thead>
+          <tbody>
+            {mappingArr.map((mapingObj, index) => (
+              <tr>
+                <td>{mapingObj.key}</td>
+                <td>
+                  <Form.Select
+                    aria-label="Default select example"
+                    value={mapingObj.value}
+                    onChange={(e) => {
+                      updateMappingFields(e.target.value, index);
+                      // updateMappingFields(
+                      //   workflowApiList[lastIndex - 1].reqFields[
+                      //     e.target.value
+                      //   ],
+                      //   index
+                      // );
+                    }}
+                  >
+                    <option value="">Select</option>
+                    {reqFiledsArr.map((val) => {
+                      return <option value={val}>{val}</option>;
+                    })}
+                  </Form.Select>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </Table>
+      );
+    } else return null;
+  };
 
   return (
-    <>  
-
-        <form className='mb-2'>
+    <>
+      <form className="mb-2">
         <h1>Create Workflow</h1>
-        <div className="mb-3">
-            <label htmlFor="workflowName" className="form-label">Workflow Name</label>
-            <input type="text" className="form-control" id="workflowName" value={workflowName} onChange={e => setWorkflowName(e.target.value)} />
-        </div>
-        <button type="button" className="btn btn-info mb-4" onClick={() => showApiInputBox(true)}>+Add Api</button>
-        <div className={`shadow p-3 mb-5 bg-body rounded border ${addApiBox ? "d-block" : "d-none"}`}>
-            <div className="mb-3 dropdown">
-                <label htmlFor="apiName" className="form-label">Api Name</label>
-                {/* <input type="text" className="form-control" list=''  id="apiName"  
+        <Row>
+          <Col md={6}>
+            <Form.Group className="mb-3" controlId="formBasicEmail">
+              <Form.Label>Workflow Name</Form.Label>
+              <Form.Control
+                type="input"
+                placeholder="Enter workflow name"
+                value={workflowName}
+                onChange={(e) => {
+                  setWorkflowName(e.target.value);
+                }}
+              />
+            </Form.Group>
+          </Col>
+          <Col md={6}>
+            <Form>
+              <Form.Label>Environment</Form.Label>
+              <Form.Select
+                aria-label="Default select example"
+                value={environment}
+                onChange={(e) => {
+                  handleEnvironmentChange(e);
+                }}
+              >
+                <option value="">Select</option>
+                <option value="dev">Dev</option>
+                <option value="uat">UAT</option>
+                <option value="prod">Prod</option>
+              </Form.Select>
+            </Form>
+          </Col>
+        </Row>
+
+        <Accordion>
+          <Accordion.Item>
+            <Accordion.Header>Add API</Accordion.Header>
+            <Accordion.Body>
+              <Row>
+                <Form>
+                  <Form.Label>Module</Form.Label>
+                  <Form.Select
+                    aria-label="Default select example"
+                    value={module}
+                    onChange={(e) => {
+                      handleModuleChange(e);
+                    }}
+                  >
+                    <option value="">Select</option>
+                    {/* <option value="module-1">Module 1</option> */}
+                    <option value="module-2">Module 2</option>
+                    {/* <option value="module-3">Module 3</option> */}
+                  </Form.Select>
+                </Form>
+              </Row>
+              <Row style={{ marginTop: 20 }}>
+                <Form>
+                  <Form.Label>AutoComplete API</Form.Label>
+                  <Select
+                    options={options}
+                    value={apiName}
+                    isClearable={true}
+                    onChange={(data) => {
+                      setApiName(data);
+                      getApiDetails(data);
+                      console.log("AUTO COMPLETE===>", data);
+                      console.log("AUTO apiName===>", apiName);
+                    }}
+                  />
+                  {/* <Form.Select
+                    aria-label="Default select example"
+                    value={module}
+                    onChange={(e) => {
+                      handleModuleChange(e);
+                    }}
+                  >
+                    <option value="">Select</option>
+                    {moduleApi.length > 0 &&
+                      moduleApi.map((apiObj) => {
+                        return (
+                          <option value={apiObj.apiId}>{apiObj.apiName}</option>
+                        );
+                      })}
+                    <option value="">Select</option>
+                    <option value="module-1">Module 1</option>
+                    <option value="module-2">Module 2</option>
+                    <option value="module-3">Module 3</option>
+                  </Form.Select> */}
+                </Form>
+              </Row>
+              <Button
+                variant="primary"
+                onClick={() => createReqFildesArr()}
+                style={{ marginTop: 10, marginBottom: 20 }}
+              >
+                Add
+              </Button>
+            </Accordion.Body>
+          </Accordion.Item>
+        </Accordion>
+
+        {/* <div style={{ marginTop: "12px" }}>
+          {moduleApi.map((obj, key) => {
+            return (
+              <Accordion>
+                <Accordion.Item eventKey={key}>
+                  <Accordion.Header>{obj.apiName}</Accordion.Header>
+                  <Accordion.Body>
+                    <p>
+                      {" "}
+                      <b>Request Fields : {JSON.stringify(obj.reqFields)}</b>
+                    </p>
+                    <br />
+                    <p>
+                      {" "}
+                      <b>Response Fields : {JSON.stringify(obj.resFileds)}</b>
+                    </p>
+                  </Accordion.Body>
+                </Accordion.Item>
+              </Accordion>
+            );
+          })}
+        </div> */}
+        <Modal show={show} onHide={closeModal} centered size="lg">
+          <Modal.Header closeButton>
+            <Modal.Title>API Details</Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+            {renderApiMappingTable()}
+            {/* <Form>
+              <Form.Label>Select Fields</Form.Label>
+              <Form.Select
+                aria-label="Default select example"
+                value={requestFileds}
+                onChange={(e) => {
+                  updateReqFileds(e.target.value);
+                }}
+              >
+                <option value="">Select</option>
+                {reqFiledsArr.map((val) => {
+                  return <option value={val}>{val}</option>;
+                })}
+              </Form.Select>
+              <Button variant="primary" onClick={createFieldMapping}>
+                Add Fields
+              </Button>
+            </Form> */}
+          </Modal.Body>
+          <Modal.Footer>
+            <Button variant="primary" onClick={handleCreateWorkflow}>
+              Create WorkFlow
+            </Button>
+            <Button variant="secondary" onClick={closeModal}>
+              Close
+            </Button>
+          </Modal.Footer>
+        </Modal>
+        {workflowApiList.length ? renderApiDetailsTable() : null}
+        <div
+          className={`shadow p-3 mb-5 bg-body rounded border ${
+            addApiBox ? "d-block" : "d-none"
+          }`}
+        >
+          <div className="mb-3 dropdown">
+            <label htmlFor="apiName" className="form-label">
+              Api Name
+            </label>
+            {/* <input type="text" className="form-control" list=''  id="apiName"  
                 value={apiName}  /> */}
-                <AutoComplete
-                    suggestions={apiAllNames}
-                    autoClass="form-control"
-                    autoCompleteApi={autoCompleteApi}
-                    autoCompleteId="apiName" 
-                    inputVal={apiName}
-                />
-            </div>
-            <div className="mb-3">
-                <label htmlFor="apiPath" className="form-label">Api Path</label>
-                <input type="text" className="form-control" id="apiPath" 
-                value={apiPath} onChange={e => setApiPath(e.target.value)}/>
-            </div>
-            <div className="mb-3">
-                <select value={httpMethod} onChange={e => setHttpMethod(e.target.value)}>
-                    <option value="">Select HTTP Method</option>
-                    <option value="GET">GET</option>
-                    <option value="POST">POST</option>
-                    <option value="PUT">PUT</option>
-                    <option value="DELETE">DELETE</option>
-                </select>
-            </div>
-            <div className="form-floating mb-3">
-                <textarea className="form-control" placeholder="Add request body" value={requestBody}
-                id="floatingTextarea2" onChange={e => setRequestBody(e.target.value)} style={{height: "100px"}}></textarea>
-                <label htmlFor="floatingTextarea2">Request Body</label>
-            </div>
-            <div className="mb-3">
-                <button type="button" className="btn btn-dark me-3" onClick={addApi} disabled={disableAdd()}>{editBox ?"Edit" : "Add"}</button>
-                {/*  */}
-                <button type="button" className="btn btn-dark" onClick={() => showApiInputBox(false)}>Cancel</button>
-            </div>
+            <AutoComplete
+              suggestions={apiAllNames}
+              autoClass="form-control"
+              autoCompleteApi={autoCompleteApi}
+              autoCompleteId="apiName"
+              inputVal={apiName}
+            />
+          </div>
+          {/* <div className="mb-3">
+            <label htmlFor="apiPath" className="form-label">
+              Api Path
+            </label>
+            <input
+              type="text"
+              className="form-control"
+              id="apiPath"
+              value={apiPath}
+              onChange={(e) => setApiPath(e.target.value)}
+            />
+          </div> */}
+          {/* <div className="mb-3">
+            <select
+              value={httpMethod}
+              onChange={(e) => setHttpMethod(e.target.value)}
+            >
+              <option value="">Select HTTP Method</option>
+              <option value="GET">GET</option>
+              <option value="POST">POST</option>
+              <option value="PUT">PUT</option>
+              <option value="DELETE">DELETE</option>
+            </select>
+          </div> */}
+
+          <div className="form-floating mb-3">
+            <textarea
+              className="form-control"
+              placeholder="Add request body"
+              value={requestBody}
+              id="floatingTextarea2"
+              onChange={(e) => setRequestBody(e.target.value)}
+              style={{ height: "100px" }}
+            ></textarea>
+            <label htmlFor="floatingTextarea2">Request Body</label>
+          </div>
+          <div className="form-floating mb-3">
+            <textarea
+              className="form-control"
+              placeholder="Add request body"
+              value={requestBody}
+              id="floatingTextarea2"
+              onChange={(e) => setRequestBody(e.target.value)}
+              style={{ height: "100px" }}
+            ></textarea>
+            <label htmlFor="floatingTextarea2">Response Body</label>
+          </div>
+          <div className="mb-3">
+            <Button
+              variant="contained"
+              onClick={addApi}
+              disabled={disableAdd()}
+              style={{ marginRight: "10px" }}
+            >
+              {editBox ? "Edit" : "Add"}
+            </Button>
+            {/*  */}
+            <Button
+              variant="contained"
+              color="error"
+              onClick={() => showApiInputBox(false)}
+            >
+              Cancel
+            </Button>
+          </div>
         </div>
-        </form>
+      </form>
 
-        {apiList && apiList.length > 0 ?
-            <>
-                <ShowWorkflow
-                    apiList={apiList}
-                    deleteApi={deleteApi}
-                    editApi={editApi} /> 
-                <div className="mb-3">
-                    <button type="button" className="btn btn-dark me-3" onClick={callApi} disabled={disableWorkflow()}>Create Workflow</button>
-                    <button type="button" className="btn btn-dark" onClick={() => setApiList([])}>Cancel</button>
-                </div>
-            </>
-        : <div className="form-label">No Workflow Exists</div>}  
+      {
+        apiList && apiList.length > 0 ? (
+          <>
+            <ShowWorkflow
+              apiList={apiList}
+              deleteApi={deleteApi}
+              editApi={editApi}
+            />
+            <div className="mb-3">
+              <Button
+                variant="contained"
+                onClick={callApi}
+                disabled={disableWorkflow()}
+                style={{ marginRight: "10px" }}
+              >
+                Create Workflow
+              </Button>
+              <Button
+                variant="contained"
+                color="error"
+                onClick={() => setApiList([])}
+              >
+                Cancel
+              </Button>
+            </div>
+          </>
+        ) : null
+        // <div className="form-label">No Workflow Exists</div>
+      }
 
-{/* <Route exact path="/">
+      {/* <Route exact path="/">
   {loggedIn ? <Redirect to="/dashboard" /> : <PublicHomePage />}
 </Route> */}
 
-        {/* {apiResp && apiResp.length > 0 ? 
+      {/* {apiResp && apiResp.length > 0 ? 
             <BrowserRouter>
               <Routes>
                 <Route path="/apiResp" element={
@@ -244,8 +881,8 @@ function Workflow() {
             </BrowserRouter>
                 : null    
         }  */}
-
-    </>)
+    </>
+  );
 }
 
-export default Workflow         
+export default Workflow;
