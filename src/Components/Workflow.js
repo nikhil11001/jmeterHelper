@@ -11,6 +11,11 @@ import Form from "react-bootstrap/Form";
 import { Accordion, Col, Modal, Row, Table, Button } from "react-bootstrap";
 import Select from "react-select";
 import { ConnectingAirportsOutlined } from "@mui/icons-material";
+import {
+  getApiList,
+  getEnvironmenList,
+  getModuleList,
+} from "../dummy-data/apiData";
 
 function Workflow() {
   const [addApiBox, setAddApiBox] = useState(false);
@@ -44,6 +49,9 @@ function Workflow() {
   const [reqFiledsArr, setReqFiledsArr] = useState([]);
   const [requestFileds, updateReqFileds] = useState("");
   const [mappingArr, updateMappingArr] = useState([]);
+  const [environmentList, setEnvironmentList] = useState([]);
+  const [moduleList, setModuleList] = useState([]);
+  const [apiDetails, setApiDetails] = useState(null);
   const workflowList = {
     dev: {
       workFlowDetails: [
@@ -177,7 +185,6 @@ function Workflow() {
       resFileds: { id: Math.random(), name: "nikhil", age: 29 },
     },
   ];
-  // let apiAllNames = apiAll.map(item => item.apiName)
 
   let navigate = useNavigate();
 
@@ -185,6 +192,11 @@ function Workflow() {
     // Mocking Resp
     setApiAll([...api]);
     setApiAllNames([...api].map((item) => item.apiName));
+  }, []);
+
+  useEffect(() => {
+    const envList = getEnvironmenList();
+    setEnvironmentList(envList);
   }, []);
 
   function showApiInputBox(switchBox) {
@@ -323,6 +335,9 @@ function Workflow() {
     console.log("Env==>", workflowList[e.target.value]);
 
     updateEnvironment(e.target.value);
+    const list = getModuleList(e.target.value);
+    console.log("moduleList==>", list);
+    setModuleList(list.moduleList);
     updateModule("");
     setApiName(null);
   };
@@ -330,16 +345,15 @@ function Workflow() {
   const handleModuleChange = (e) => {
     setApiName(null);
     console.log("Module==>", e.target.value);
-    const list = moduleApiList.filter(
-      (item) => item.moduleId == e.target.value
-    );
-    let arr = list;
+    const list = getApiList(e.target.value);
+    let arr = list.apiList;
+    console.log("LIST==>", arr);
     let optionsArr = [];
-    // arr.push(list);
     optionsArr = arr.map((list) => {
       return { value: list.apiId, label: list.apiName };
     });
-    console.log("LIST==>", arr);
+    const apiData = getApiList(e.target.value);
+    console.log("API LIST==>", apiData);
     updateModuleApiList(arr);
     updateOptions(optionsArr);
     updateModule(e.target.value);
@@ -347,15 +361,14 @@ function Workflow() {
   const createReqFildesArr = () => {
     let objectKeysArr = null;
     if (workflowApiList.length > 1) {
-      objectKeysArr = Object.keys(
-        workflowApiList[workflowApiList.length - 1].reqFields
-      );
+      objectKeysArr = workflowApiList[workflowApiList.length - 1].requestField;
       if (workflowApiList.length > 1) {
         const index = workflowApiList.findIndex(
           (obj) => obj.apiName == apiName.label
         );
 
-        const keysArr = Object.keys(workflowApiList[index - 1].reqFields);
+        const keysArr = workflowApiList[index - 1].requestField;
+        // Object.keys(workflowApiList[index - 1].requestField);
         setReqFiledsArr(keysArr);
         console.log("arrObj===>", index, keysArr);
       }
@@ -365,10 +378,11 @@ function Workflow() {
       let fieldMapping = {};
       const lastIndex = newWorkflowApiList.length - 1;
       let currentApiObj = newWorkflowApiList[lastIndex];
-      currentApiObj["reqFields"] = newWorkflowApiList[lastIndex - 1]?.resFileds;
+      currentApiObj["requestField"] =
+        newWorkflowApiList[lastIndex - 1]?.responseField;
 
-      const keysArr = Object.keys(currentApiObj?.reqFields);
-      const valuesArr = Object.values(currentApiObj?.reqFields);
+      const keysArr = currentApiObj?.requestField;
+      const valuesArr = currentApiObj?.requestField;
 
       const fieldMappingArr = keysArr.map((val, i) => {
         return { key: val };
@@ -422,9 +436,7 @@ function Workflow() {
         <Table striped bordered hover responsive>
           <thead>
             <tr>
-              {/* <th></th> */}
               <th>API ID</th>
-              {/* <th>Module ID</th>*/}
               <th>API Name</th>
               <th>Request Fileds</th>
               <th>Response Fileds</th>
@@ -434,14 +446,10 @@ function Workflow() {
             {workflowApiList.map((obj) => {
               return (
                 <tr>
-                  {/* <td>
-                  <Form.Check type="checkbox" />
-                </td> */}
                   <td>{obj.apiId}</td>
-                  {/* <td>{obj.moduleId}</td>*/}
                   <td>{obj.apiName}</td>
-                  <td>{JSON.stringify(obj.reqFields)}</td>
-                  <td>{JSON.stringify(obj.resFileds)}</td>
+                  <td>{JSON.stringify(obj.requestField)}</td>
+                  <td>{JSON.stringify(obj.responseField)}</td>
                 </tr>
               );
             })}
@@ -471,8 +479,9 @@ function Workflow() {
 
           for (let i = 0; i < mappingArr.length; i++) {
             let data = mappingArr[i]?.key;
-            mappinObj[`${data}`] =
-              workflowApiList[index - 1].reqFields[`${data}`];
+            mappinObj[`${data}`] = workflowApiList[index - 1].requestField.find(
+              (val) => val == data
+            );
           }
           obj.fieldMapping = mappinObj;
         }
@@ -492,6 +501,9 @@ function Workflow() {
     };
     console.log("Workflow payload==>", reuestPaylod);
     closeModal();
+    updateMappingArr([]);
+    setApiName(null);
+    setReqFiledsArr([]);
   };
 
   const createFieldMapping = () => {
@@ -499,9 +511,8 @@ function Workflow() {
     let fieldMapping = {};
     const lastIndex = newWorkflowApiList.length - 1;
     let currentApiObj = newWorkflowApiList[lastIndex];
-    currentApiObj.reqFields = newWorkflowApiList[lastIndex - 1].resFileds;
+    currentApiObj.reqFields = newWorkflowApiList[lastIndex - 1].responseField;
     fieldMapping[requestFileds] = currentApiObj.reqFields[requestFileds];
-    // fieldMapping = { ...currentApiObj.reqFields };
     if (currentApiObj.fieldMapping) {
       currentApiObj.fieldMapping = {
         ...currentApiObj.fieldMapping,
@@ -528,25 +539,6 @@ function Workflow() {
       let newWorkflowApiList = [...workflowApiList];
       let fieldMapping = {};
       const lastIndex = newWorkflowApiList.length - 1;
-      // let currentApiObj = newWorkflowApiList[lastIndex];
-      // currentApiObj["reqFields"] = newWorkflowApiList[lastIndex - 1]?.resFileds;
-
-      // const keysArr = Object.keys(currentApiObj?.reqFields);
-      // const valuesArr = Object.values(currentApiObj?.reqFields);
-
-      // const fieldMappingArr = keysArr.map((val, i) => {
-      //   return { key: val };
-      // });
-
-      // fieldMappingArr.map((obj) => {
-      //   valuesArr.map((val) => {
-      //     obj.value = val;
-      //   });
-      // });
-
-      // updateMappingArr(fieldMappingArr);
-
-      // console.log("fieldMappingArr===>", fieldMappingArr);
       return (
         <Table striped bordered hover responsive>
           <thead>
@@ -565,12 +557,6 @@ function Workflow() {
                     value={mapingObj.value}
                     onChange={(e) => {
                       updateMappingFields(e.target.value, index);
-                      // updateMappingFields(
-                      //   workflowApiList[lastIndex - 1].reqFields[
-                      //     e.target.value
-                      //   ],
-                      //   index
-                      // );
                     }}
                   >
                     <option value="">Select</option>
@@ -616,9 +602,11 @@ function Workflow() {
                 }}
               >
                 <option value="">Select</option>
-                <option value="dev">Dev</option>
-                <option value="uat">UAT</option>
-                <option value="prod">Prod</option>
+                {environmentList.map((obj) => (
+                  <option value={obj.environmenId}>
+                    {obj.enviornmentName}
+                  </option>
+                ))}
               </Form.Select>
             </Form>
           </Col>
@@ -639,9 +627,11 @@ function Workflow() {
                     }}
                   >
                     <option value="">Select</option>
-                    {/* <option value="module-1">Module 1</option> */}
-                    <option value="module-2">Module 2</option>
-                    {/* <option value="module-3">Module 3</option> */}
+                    {moduleList.map((obj) => {
+                      return (
+                        <option value={obj.moduleId}>{obj.moduleName}</option>
+                      );
+                    })}
                   </Form.Select>
                 </Form>
               </Row>
@@ -659,25 +649,6 @@ function Workflow() {
                       console.log("AUTO apiName===>", apiName);
                     }}
                   />
-                  {/* <Form.Select
-                    aria-label="Default select example"
-                    value={module}
-                    onChange={(e) => {
-                      handleModuleChange(e);
-                    }}
-                  >
-                    <option value="">Select</option>
-                    {moduleApi.length > 0 &&
-                      moduleApi.map((apiObj) => {
-                        return (
-                          <option value={apiObj.apiId}>{apiObj.apiName}</option>
-                        );
-                      })}
-                    <option value="">Select</option>
-                    <option value="module-1">Module 1</option>
-                    <option value="module-2">Module 2</option>
-                    <option value="module-3">Module 3</option>
-                  </Form.Select> */}
                 </Form>
               </Row>
               <Button
@@ -691,53 +662,11 @@ function Workflow() {
           </Accordion.Item>
         </Accordion>
 
-        {/* <div style={{ marginTop: "12px" }}>
-          {moduleApi.map((obj, key) => {
-            return (
-              <Accordion>
-                <Accordion.Item eventKey={key}>
-                  <Accordion.Header>{obj.apiName}</Accordion.Header>
-                  <Accordion.Body>
-                    <p>
-                      {" "}
-                      <b>Request Fields : {JSON.stringify(obj.reqFields)}</b>
-                    </p>
-                    <br />
-                    <p>
-                      {" "}
-                      <b>Response Fields : {JSON.stringify(obj.resFileds)}</b>
-                    </p>
-                  </Accordion.Body>
-                </Accordion.Item>
-              </Accordion>
-            );
-          })}
-        </div> */}
         <Modal show={show} onHide={closeModal} centered size="lg">
           <Modal.Header closeButton>
             <Modal.Title>API Details</Modal.Title>
           </Modal.Header>
-          <Modal.Body>
-            {renderApiMappingTable()}
-            {/* <Form>
-              <Form.Label>Select Fields</Form.Label>
-              <Form.Select
-                aria-label="Default select example"
-                value={requestFileds}
-                onChange={(e) => {
-                  updateReqFileds(e.target.value);
-                }}
-              >
-                <option value="">Select</option>
-                {reqFiledsArr.map((val) => {
-                  return <option value={val}>{val}</option>;
-                })}
-              </Form.Select>
-              <Button variant="primary" onClick={createFieldMapping}>
-                Add Fields
-              </Button>
-            </Form> */}
-          </Modal.Body>
+          <Modal.Body>{renderApiMappingTable()}</Modal.Body>
           <Modal.Footer>
             <Button variant="primary" onClick={handleCreateWorkflow}>
               Create WorkFlow
@@ -757,8 +686,6 @@ function Workflow() {
             <label htmlFor="apiName" className="form-label">
               Api Name
             </label>
-            {/* <input type="text" className="form-control" list=''  id="apiName"  
-                value={apiName}  /> */}
             <AutoComplete
               suggestions={apiAllNames}
               autoClass="form-control"
@@ -767,31 +694,6 @@ function Workflow() {
               inputVal={apiName}
             />
           </div>
-          {/* <div className="mb-3">
-            <label htmlFor="apiPath" className="form-label">
-              Api Path
-            </label>
-            <input
-              type="text"
-              className="form-control"
-              id="apiPath"
-              value={apiPath}
-              onChange={(e) => setApiPath(e.target.value)}
-            />
-          </div> */}
-          {/* <div className="mb-3">
-            <select
-              value={httpMethod}
-              onChange={(e) => setHttpMethod(e.target.value)}
-            >
-              <option value="">Select HTTP Method</option>
-              <option value="GET">GET</option>
-              <option value="POST">POST</option>
-              <option value="PUT">PUT</option>
-              <option value="DELETE">DELETE</option>
-            </select>
-          </div> */}
-
           <div className="form-floating mb-3">
             <textarea
               className="form-control"
@@ -835,52 +737,32 @@ function Workflow() {
         </div>
       </form>
 
-      {
-        apiList && apiList.length > 0 ? (
-          <>
-            <ShowWorkflow
-              apiList={apiList}
-              deleteApi={deleteApi}
-              editApi={editApi}
-            />
-            <div className="mb-3">
-              <Button
-                variant="contained"
-                onClick={callApi}
-                disabled={disableWorkflow()}
-                style={{ marginRight: "10px" }}
-              >
-                Create Workflow
-              </Button>
-              <Button
-                variant="contained"
-                color="error"
-                onClick={() => setApiList([])}
-              >
-                Cancel
-              </Button>
-            </div>
-          </>
-        ) : null
-        // <div className="form-label">No Workflow Exists</div>
-      }
-
-      {/* <Route exact path="/">
-  {loggedIn ? <Redirect to="/dashboard" /> : <PublicHomePage />}
-</Route> */}
-
-      {/* {apiResp && apiResp.length > 0 ? 
-            <BrowserRouter>
-              <Routes>
-                <Route path="/apiResp" element={
-                    <Response
-                        apiResp={apiResp}
-                        apiList={apiList} />
-                    }></Route>
-                </Routes>
-            </BrowserRouter>
-                : null    
-        }  */}
+      {apiList && apiList.length > 0 ? (
+        <>
+          <ShowWorkflow
+            apiList={apiList}
+            deleteApi={deleteApi}
+            editApi={editApi}
+          />
+          <div className="mb-3">
+            <Button
+              variant="contained"
+              onClick={callApi}
+              disabled={disableWorkflow()}
+              style={{ marginRight: "10px" }}
+            >
+              Create Workflow
+            </Button>
+            <Button
+              variant="contained"
+              color="error"
+              onClick={() => setApiList([])}
+            >
+              Cancel
+            </Button>
+          </div>
+        </>
+      ) : null}
     </>
   );
 }

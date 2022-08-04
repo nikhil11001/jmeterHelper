@@ -5,30 +5,6 @@ import { useNavigate } from "react-router-dom";
 function Response({ apiResp, apiList, workflowName }) {
   let navigate = useNavigate();
 
-  // function redirectToHome () {
-  //   setApiResp([]);
-  //   navigate("/");
-  // }
-
-  // function redirectToNewRequest () {
-  //   setApiList([]);
-  //   setWorkflowName("");
-  //   redirectToHome();
-  // }
-
-  // useEffect(() => {
-  //   const show = new Array(apiResp.length).fill(true);
-  //   setShowRespButton(show)
-  // }, [apiResp])
-
-  // function setShowResp (ind) {
-  //   const showArr = showRespButton.slice();
-  //   showArr[ind] = !showArr[ind];
-  //   setShowRespButton(showArr)
-  // }
-  // useEffect (() => {
-
-  // }, [apiResp])
   return (
     <div className="container my-5">
       <div className="d-flex justify-content-between">

@@ -16,7 +16,6 @@ function ShowWorkflow(props) {
             <th scope="col">Api Name</th>
             <th scope="col">Api Path</th>
             <th scope="col">HTTP Method</th>
-            {/* <th scope='col'>Request Body</th> */}
             <th scope="col">Actions</th>
           </tr>
         </thead>
@@ -30,15 +29,7 @@ function ShowWorkflow(props) {
                   <td>{api.apiName}</td>
                   <td>{api.apiPath}</td>
                   <td>{api.httpMethod}</td>
-                  {/* <td>{api.requestBody}</td> */}
                   <td>
-                    {/* <Button
-                      variant="contained"
-                      className="btn btn-dark me-2"
-                      onClick={() => props.editApi(index)}
-                    >
-                      Edit
-                    </Button> */}
                     <IconButton
                       aria-label="delete"
                       size="small"
@@ -47,13 +38,6 @@ function ShowWorkflow(props) {
                     >
                       <EditIcon fontSize="inherit" />
                     </IconButton>
-                    {/* <Button
-                      variant="contained"
-                      className="btn btn-dark"
-                      onClick={() => props.deleteApi(index)}
-                    >
-                      Delete
-                    </Button> */}
                     <IconButton aria-label="delete" size="small">
                       <DeleteIcon
                         fontSize="inherit"
